@@ -93,3 +93,36 @@ const addMenu = () => {
         }
     });
 };
+
+const addDepartment = () => {
+    inquirer.prompt([
+        {
+            name: 'departmentName',
+            type: 'input',
+            message: 'New department name:',
+        }
+    ])
+    .then((answer) => {
+        let departmentExists = false;
+        connection.query('SELECT name FROM department', (err, res) => {
+            if (err) throw err;
+            res.forEach((item) => { 
+                if (item.name === answer.departmentName.trim()) {
+                    departmentExists = true; 
+                }; 
+            });
+
+            if (departmentExists === true) {
+                console.log(`A department named '${answer.departmentName.trim()}' already exists.\n`);
+            } else {
+                connection.query(
+                    `INSERT INTO department(name) VALUES(?)`, [answer.departmentName.trim()],
+                    (err, res) => {
+                        if (err) throw err;
+                        console.log(`'${answer.departmentName.trim()}' department successfully added to database!\n`);
+                    }
+                );
+            }
+        });
+    });
+};
