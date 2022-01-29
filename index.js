@@ -747,3 +747,37 @@ const viewDepartments = () => {
     });
 };
 
+const deleteMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'deleteAction',
+            type: 'Please choose an option.',
+            choices: [
+                'Delete an employee',
+                'Delete a role',
+                'Delete a department',
+                'Delete ALL data',
+                'Go back to main menu'
+            ]
+        }
+    ])
+    .then((answer) => {
+        switch(answer.deleteAction) {
+            case 'Delete an employee':
+                deleteEmployee();
+                break;
+            case 'Delete a role':
+                deleteRole();
+                break;
+            case 'Delete a department':
+                deleteDepartment();
+                break;
+            case 'Delete ALL data':
+                deleteALLData();
+                break;
+            default:
+                mainMenu();
+                break;
+        };
+    });
+};
