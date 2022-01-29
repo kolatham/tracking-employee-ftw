@@ -22,3 +22,44 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the company_db database.`)
 );
+
+connection.connect((err)=>{
+    if (err) throw err;
+    mainMenu();
+});
+
+
+const mainMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'action',
+            type: 'list',
+            choices: [
+                'Add data',
+                'View data',
+                'Update data',
+                'Delete data'
+
+            ]
+        }
+    ])
+    .then((answer)=> {
+        
+        switch(answer.action){
+            case 'Add data':
+                addMenu();
+                break;
+            case 'View data':
+                viewMenu();
+                break;
+            case 'Update data':
+                updateMenu();
+                break;
+            case 'Delete data':
+                deleteMenu();
+                break;
+        }
+        return;
+    })
+}
+
