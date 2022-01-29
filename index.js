@@ -380,7 +380,7 @@ const viewMenu = () => {
                 viewEmployeeByManagerMenu();
                 break;
             default:
-                mainMenu();
+                viewMenu();
         };
     });
     
@@ -435,7 +435,7 @@ const viewEmployeeByRoleMenu = () => {
                         viewEmployeeByRoleEach(roleTitles);
                         break;
                     default:
-                        viewEmployeeMenu();
+                        viewMenu();
                         break;
                 };
             });
@@ -487,5 +487,67 @@ const viewEmployeeByRoleEach = (roleTitles) => {
                 console.table(res);
             }
         });
+    });
+};
+
+
+const viewEmployeeByDepartmentMenu = () => {
+    let departmentNames = ['No existing departments in database'];
+    connection.query('SELECT * FROM department', (err, res) => {
+        if (err) throw err;
+        if (res < 1) {
+            console.log('There are no departments to display.');
+        } else {
+            if (departmentNames[0] === 'No existing departments in database') {
+                departmentNames.splice(0, 1);
+            };
+            res.forEach((item) => {
+                departmentNames.push(`${item.id} | ${item.name}`);
+            });
+
+            inquirer.prompt([
+                {
+                    name: 'allOrEach',
+                    type: 'list',
+                    message: 'How would you like to view employees?',
+                    choices: [
+                        'View by all departments',
+                        'View by individual department',
+                        'Go back to view employee menu'
+                    ]
+                }
+            ]).then((answer) => {
+                // Continues to functions
+                switch(answer.allOrEach) {
+                    case 'View by all departments':
+                        viewEmployeeByDepartmentAll();
+                        break;
+                    case 'View by individual department':
+                        viewEmployeeByDepartmentEach(departmentNames);
+                        break;
+                    default:
+                        viewMenu();
+                        break;
+                };
+            });
+        };
+    });
+};
+
+const viewEmployeeByDepartmentAll = () => {
+    let query = 'SELECT department.name AS department, A.id, A.first_name, A.last_name, role.title AS role, role.salary, B.first_name AS manager_first, B.last_name AS manager_last ';
+    query += 'FROM employee A ';
+    query += 'LEFT JOIN role ON A.role_id = role.id ';
+    query += 'JOIN department ON role.department_id = department.id ';
+    query += 'LEFT JOIN employee B ON A.manager_id = B.id ';
+    query += 'ORDER BY department';
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length > 0) {
+            console.log('');
+            console.table(res);
+        } else {
+            console.log('There is no employee data to display.')
+        };
     });
 };
