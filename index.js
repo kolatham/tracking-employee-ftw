@@ -686,7 +686,6 @@ const viewEmployeeByManagerEach = () => {
                 let managerId = parseInt(answer.managerList.split('|').splice(0, 1).join('').trim());
                 let query = 'SELECT A.id AS employee_id, A.first_name AS employee_first, A.last_name AS employee_last, role.title AS role, role.salary, department.name AS department ';
                 query += 'FROM employee A ';
-                query += 'LEFT JOIN role ON A.role_id = role.id ';
                 query += 'LEFT JOIN department ON role.department_id = department.id ';
                 query += 'JOIN employee B ON A.manager_id = B.id ';
                 query += `WHERE B.id = ? `;
@@ -784,3 +783,160 @@ const updateMenu = () => {
         };
     });
 };
+
+const updateEmployeeMenu = () => {
+    let method;
+    let employee;
+    let employeeRole;
+    let employeeId;
+    let managerId;
+    let managerName;
+    let employees = [];
+    let employeeNames = ['No existing employees in database'];
+
+    const updateEmployeePromise = (answer) => {
+        if (method === 'input') {
+            employeeId = parseInt(answer.employee);
+        } else {
+            employeeId = parseInt(answer.employee.split(' ').splice(0, 1));
+        };
+        connection.query(`SELECT * FROM employee WHERE id = ?`, [employeeId], (err, res) => {
+            if (err) throw err;
+
+            if (res.length < 1) {
+                console.log(`Sorry! No employees with the id ${employeeId} found in the database.`);
+                setTimeout(updateMenu, 1000);
+            } else {
+                employee = res[0].first_name + ' ' + res[0].last_name;
+
+                if (res[0].manager_id !== null) {
+                    managerId = parseInt(res[0].manager_id);
+                } else {
+                    managerId = null;
+                }
+
+                if (typeof(managerId) === "object") {
+                    managerName = 'No manager';
+                    managerId = 'N/A';
+                } else {
+                    connection.query(`SELECT * FROM employee WHERE id = ?`, [managerId], (err, res) => {
+                        if (err) throw err;
+                        managerName = res[0].first_name + ' ' + res[0].last_name;
+                    });  
+                };
+
+                connection.query(
+                    `SELECT * FROM role WHERE id = ?`, [employeeRoleId], (err, res) => {
+                        if (err) throw err;
+                        if (res.length > 0) {
+                            employeeRole = res[0].title;
+                        } else {
+                            employeeRole = 'no existing role'
+                        };
+
+                        inquirer.prompt([
+                            {
+                                name: 'updateEmployee',
+                                type: 'list',
+                                message: 'Please choose an option',
+                                choices: [
+                                    'Employee name',
+                                    'Employee role',
+                                    'Employee manager',
+                                    'Go back to update menu'
+                                ]
+                            }
+                        ])
+                        .then((answer) => {
+                            switch(answer.updateEmployee) {
+                                case 'Employee name':
+                                    updateEmployeeName(employeeId, employee, employees);
+                                    break;
+                                case 'Employee role':
+                                    updateEmployeeRole(employeeId, employee, employeeRole);
+                                    break;
+                                case 'Employee manager':
+                                    updateEmployeeManager(employeeId, managerId, managerName);
+                                    break;
+                                default:
+                                    updateMenu();
+                                    break;
+                            };
+                        });
+                    }
+                );
+            }
+        });
+    };
+
+    let query = 'SELECT employee.id, employee.first_name, employee.last_name, department.name ';
+    query += 'FROM employee ';
+    query += 'LEFT JOIN department ON role.department_id = department.id';
+
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length < 1) {
+            inquirer.prompt([
+                {
+                    name: 'noEmployees',
+                    type: 'list',
+                    message: 'There are no existing employees in the database...',
+                    choices: ['Go back to update menu']
+                }
+            ]).then(() => {
+                updateMenu();
+            });
+        } else {
+            if (employeeNames[0] === 'No existing employees in database') {
+                employeeNames.splice(0, 1);
+            };
+            res.forEach((item) => {
+                employees.push(item);
+                employeeNames.push(`${item.id} | ${item.first_name} ${item.last_name} | ${item.title} | ${item.name}`);
+            });
+
+            inquirer.prompt([
+                {
+                    name: 'inputOrView',
+                    type: 'list',
+                    message: 'Select one of the following:',
+                    choices: [
+                        'Find employee by id',
+                        'View all employees',
+                        chalk.italic('Go back to update menu')
+                    ]
+                }
+            ]).then((answer) => {
+                switch(answer.inputOrView) {
+                    case 'Find employee by id':
+                        method = 'input';
+                        inquirer.prompt([
+                            {
+                                name: 'employee',
+                                type: 'input',
+                                message: 'What is the id of the employee you would like to update?',
+                                validate: validateNum
+                            }
+                        ]).then((answer) => updateEmployeePromise(answer));
+                        break;
+                    case 'View all employees':
+                        method = 'list';
+                        inquirer.prompt([
+                            {
+                                name: 'employee',
+                                type: 'list',
+                                message: 'Select one of the following employees to update:',
+                                choices: employeeNames
+                            }
+                        ]).then((answer) => updateEmployeePromise(answer));
+                        break;
+                    default: 
+                        updateMenu();
+                        break;
+                };
+            })
+        };
+    });
+};
+
+    
