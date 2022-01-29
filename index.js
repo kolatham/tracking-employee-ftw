@@ -402,3 +402,90 @@ const viewEmployeeAll = () => {
         };
     });
 };
+
+
+const viewEmployeeByRoleMenu = () => {
+    let roleTitles = [];
+    connection.query('SELECT * FROM role', (err, res) => {
+        if (err) throw err;
+        if (res < 1) {
+            console.log('There are no roles to display.');
+        } else {
+            res.forEach((item) => {
+                roleTitles.push(`${item.id} | ${item.title}`);
+            });
+
+            inquirer.prompt([
+                {
+                    name: 'allOrEach',
+                    type: 'list',
+                    message: 'How would you like to view employees?',
+                    choices: [
+                        'View by all roles',
+                        'View by individual role',
+                        'Go back to view menu'
+                    ]
+                }
+            ]).then((answer) => {
+                switch(answer.allOrEach) {
+                    case 'View by all roles':
+                        viewEmployeeByRoleAll();
+                        break;
+                    case 'View by individual role':
+                        viewEmployeeByRoleEach(roleTitles);
+                        break;
+                    default:
+                        viewEmployeeMenu();
+                        break;
+                };
+            });
+        }
+    });
+};
+
+const viewEmployeeByRoleAll = () => {
+    let query = 'SELECT role.title AS role, A.id, A.first_name, A.last_name, role.salary, department.name AS department, B.first_name AS manager_first, B.last_name AS manager_last ';
+    query += 'FROM employee A ';
+    query += 'JOIN role ON A.role_id = role.id ';
+    query += 'LEFT JOIN department ON role.department_id = department.id ';
+    query += 'LEFT JOIN employee B ON A.manager_id = B.id ';
+    query += 'ORDER BY role';
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length > 0) {
+            console.log('');
+            console.table(res);
+        } else {
+            console.log('There is no employee data to display.')
+        };
+    });
+};
+
+const viewEmployeeByRoleEach = (roleTitles) => {
+    inquirer.prompt([
+        {
+            name: 'roleSelect',
+            type: 'list',
+            message: 'Select role to view employees:',
+            choices: roleTitles
+        }
+    ]).then((answer) => {
+        let roleId = parseInt(answer.roleSelect.split('|').splice(0, 1).join('').trim());
+
+        let query = 'SELECT role.title AS role, A.id, A.first_name, A.last_name, role.salary, department.name AS department, B.first_name AS manager_first, B.last_name AS manager_last ';
+        query += 'FROM employee A ';
+        query += 'LEFT JOIN role ON A.role_id = role.id ';
+        query += 'LEFT JOIN department ON role.department_id = department.id ';
+        query += 'LEFT JOIN employee B ON A.manager_id = B.id ';
+        query += `WHERE role.id = ?`;
+        connection.query(query, [roleId], (err, res) => {
+            if (err) throw err;
+            if (res.length < 1) {
+                console.log('There is no employee data for this role.');
+            } else {
+                console.log('');
+                console.table(res);
+            }
+        });
+    });
+};
