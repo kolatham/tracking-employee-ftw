@@ -939,4 +939,57 @@ const updateEmployeeMenu = () => {
     });
 };
 
-    
+const updateEmployeeName = (employeeId, employee, employees) => {
+    inquirer.prompt([
+        {
+            name: 'updateFirstName',
+            type: 'input',
+            message: 'Update first name:',
+        },
+        {
+            name: 'updateLastName',
+            type: 'input',
+            message: 'Update last name:',
+        }
+    ])
+    .then((answers) => {
+        let employeeExists = false;
+        let updatedFirstName = answers.updateFirstName.trim();
+        let updatedLastName = answers.updateLastName.trim();
+        let updatedName = `${updatedFirstName} ${updatedLastName}`;
+
+        employees.forEach((item) => {
+            if (`${item.first_name} ${item.last_name}` === updatedName) {
+                employeeExists = true;
+            };
+        });
+
+        if (employeeExists === true) {
+            inquirer.prompt([
+                {
+                    name: 'confirmContinue',
+                    type: 'confirm',
+                    message: `An employee named '${updatedName}' already exists. Would you still like to proceed?`
+                }
+            ]).then((answer) => {
+                if (answer.confirmContinue === false) {
+                    updateMenu();
+                } else {
+                    updateEmployeePromise(updatedFirstName, updatedLastName, updatedName, employee, employeeId);
+                };
+            });
+        } else {
+            updateEmployeePromise(updatedFirstName, updatedLastName, updatedName, employee, employeeId);
+        }
+    });
+};
+
+const updateEmployeePromise = (updatedFirstName, updatedLastName, updatedName, employee, employeeId) => {
+    let query = 'UPDATE employee ';
+    query += 'SET first_name = ?, last_name = ? WHERE id = ?'
+    connection.query(query, [updatedFirstName, updatedLastName, employeeId], (err, res) => {
+        if (err) throw err;
+        console.log((`Employee (id: ${employeeId}) name successfully updated!\n`) + (`${employee} (previous name) ---> ${updatedName} (updated name)\n`));
+        
+    });
+};
