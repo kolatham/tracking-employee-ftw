@@ -350,8 +350,40 @@ const addEmployeeContinue = (employees, employeeNames, employeeFirstName, employ
         );
     });
 };
-
 const viewMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'viewAction',
+            type: 'list',
+            message: `${chalk.hex('#ffdd8c')('▬▬▬▬▬▬▬▬▬▬ VIEW MENU ▬▬▬▬▬▬▬▬▬▬')}\n${chalk.hex('#bec0c2').italic('What would you like to do?')}`,
+            choices: [
+                'View employees',
+                'View roles',
+                'View departments',
+                chalk.italic('Go back to main menu')
+            ]
+        }
+    ])
+    .then((answer) => {
+        // Continues to menus/functions
+        switch(answer.viewAction) {
+            case 'View employees':
+                viewEmployeeMenu();
+                break;
+            case 'View roles':
+                viewRoles();
+                break;
+            case 'View departments':
+                viewDepartmentMenu();
+                break;
+            default:
+                mainMenu();
+                break;
+        };
+    });
+};
+
+const viewEmployeeMenu = () => {
     inquirer.prompt([
         {
             name: 'viewEmployees',
@@ -666,6 +698,60 @@ const viewEmployeeByManagerEach = () => {
                 });
             });
         };
+    });
+};
+
+const viewRoles = () => {
+    let query = 'SELECT role.id, role.title, role.salary, department.name AS department ';
+    query += 'FROM role ';
+    query += 'LEFT JOIN department ON role.department_id = department.id';
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length > 0) {
+            console.log('');
+            console.table(res);
+        } else {
+            console.log('There is no role data to display.')
+        };
+    });
+};
+
+const viewDepartmentMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'viewDepartmentAction',
+            type: 'list', 
+            message: 'What would you like to view?',
+            choices: [
+                'View all departments',
+                'View total utilized budget of a department',
+                'Go back to view menu'
+            ]
+        }
+    ]).then((answer) => {
+        switch(answer.viewDepartmentAction) {
+            case 'View all departments':
+                viewDepartments();
+                break;
+            default: 
+                viewMenu();
+                break;
+        };
+    });
+};
+
+// Displays all departments
+const viewDepartments = () => {
+    let query = 'SELECT * FROM department';
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length > 0) {
+            console.log('');
+            console.table(res);
+        } else {
+            console.log('There is no department data to display.')
+        };
+        setTimeout(viewMenu, 1000);
     });
 };
 
