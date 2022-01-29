@@ -625,3 +625,47 @@ const viewEmployeeByManagerAll = () => {
         };
     });
 };
+
+const viewEmployeeByManagerEach = () => {
+    let managers = [];
+    let query = 'SELECT B.id AS manager_id, B.first_name AS manager_first, B.last_name AS manager_last, role.title AS role ';
+    query += 'FROM employee A ';
+    query += 'JOIN employee B ON A.manager_id = B.id ';
+    query += 'JOIN role ON B.role_id = role.id';
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length < 1) {
+            console.log('There are no managers.');
+        } else {
+            res.forEach((item) => {
+                if (managers.includes(`${item.manager_id} | ${item.manager_first} ${item.manager_last} | ${item.role}`) === false) {
+                    managers.push(`${item.manager_id} | ${item.manager_first} ${item.manager_last} | ${item.role}`);
+                }
+            });
+    
+            inquirer.prompt([
+                {
+                    name: 'managerList',
+                    type: 'list',
+                    message: 'Select a manager to view employees:',
+                    choices: managers
+                }
+            ]).then((answer) => {
+                let managerId = parseInt(answer.managerList.split('|').splice(0, 1).join('').trim());
+                let query = 'SELECT A.id AS employee_id, A.first_name AS employee_first, A.last_name AS employee_last, role.title AS role, role.salary, department.name AS department ';
+                query += 'FROM employee A ';
+                query += 'LEFT JOIN role ON A.role_id = role.id ';
+                query += 'LEFT JOIN department ON role.department_id = department.id ';
+                query += 'JOIN employee B ON A.manager_id = B.id ';
+                query += `WHERE B.id = ? `;
+                query += 'ORDER BY A.manager_id';
+                connection.query(query, [managerId], (err, res) => {
+                    if (err) throw err;
+                    console.log('');
+                    console.table(res);
+                });
+            });
+        };
+    });
+};
+
