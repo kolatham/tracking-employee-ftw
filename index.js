@@ -551,3 +551,59 @@ const viewEmployeeByDepartmentAll = () => {
         };
     });
 };
+
+const viewEmployeeByDepartmentEach = (departmentNames) => {
+    inquirer.prompt([
+        {
+            name: 'departmentSelect',
+            type: 'list',
+            message: 'Select department to view employees:',
+            choices: departmentNames
+        }
+    ]).then((answer) => {
+        let departmentId = parseInt(answer.departmentSelect.split('|').splice(0, 1).join('').trim());
+
+        let query = 'SELECT department.name AS department, A.id, A.first_name, A.last_name, role.title AS role, role.salary, B.first_name AS manager_first, B.last_name AS manager_last ';
+        query += 'FROM employee A ';
+        query += 'LEFT JOIN role ON A.role_id = role.id ';
+        query += 'LEFT JOIN department ON role.department_id = department.id ';
+        query += 'LEFT JOIN employee B ON A.manager_id = B.id ';
+        query += 'WHERE department.id = ?'
+        connection.query(query, [departmentId], (err, res) => {
+            if (err) throw err;
+            if (res.length < 1) {
+                console.log('There is no employee data for this role.');
+            } else {
+                console.log('');
+                console.table(res);
+            }
+        });
+    });
+};
+
+const viewEmployeeByManagerMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'allOrEach',
+            type: 'list',
+            message: 'How would you like to view employees?',
+            choices: [
+                'View by all managers',
+                'View by individual manager',
+                'Go back to view employee menu'
+            ]
+        }
+    ]).then((answer) => {
+        switch(answer.allOrEach) {
+            case 'View by all managers':
+                viewEmployeeByManagerAll();
+                break;
+            case 'View by individual manager':
+                viewEmployeeByManagerEach();
+                break;
+            default:
+                viewMenu();
+                break;
+        };
+    });
+};
