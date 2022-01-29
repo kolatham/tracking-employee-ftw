@@ -724,7 +724,6 @@ const viewDepartmentMenu = () => {
             message: 'What would you like to view?',
             choices: [
                 'View all departments',
-                'View total utilized budget of a department',
                 'Go back to view menu'
             ]
         }
@@ -740,7 +739,6 @@ const viewDepartmentMenu = () => {
     });
 };
 
-// Displays all departments
 const viewDepartments = () => {
     let query = 'SELECT * FROM department';
     connection.query(query, (err, res) => {
@@ -751,7 +749,38 @@ const viewDepartments = () => {
         } else {
             console.log('There is no department data to display.')
         };
-        setTimeout(viewMenu, 1000);
     });
 };
 
+const updateMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'updateAction',
+            type: 'list',
+            message: 'Please choose an option',
+            choices: [
+                'Update an employee',
+                'Update a role',
+                'Update a department',
+                'Go back to main menu'
+            ]
+        }
+    ])
+    .then((answer) => {
+        
+        switch(answer.updateAction) {
+            case 'Update an employee':
+                updateEmployeeMenu();
+                break;
+            case 'Update a role':
+                updateRoleMenu();
+                break;
+            case 'Update a department':
+                updateDepartment();
+                break;
+            default:
+                mainMenu();
+                break;
+        };
+    });
+};
