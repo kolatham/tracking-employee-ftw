@@ -58,8 +58,38 @@ const mainMenu = () => {
             case 'Delete data':
                 deleteMenu();
                 break;
-        }
+        };
         return;
-    })
-}
+    });
+};
 
+const addMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'addAction',
+            type: 'list',
+            choices: [
+                'Add an employee',
+                'Add a role',
+                'Add a department',
+            ]
+        }
+    ])
+    .then((answer) => {
+        // Continues to functions
+        switch(answer.addAction) {
+            case 'Add an employee':
+                addEmployee();
+                break;
+            case 'Add a role':
+                addRole();
+                break;
+            case 'Add a department':
+                addDepartment();
+                break;
+            default:
+                mainMenu();
+                break;
+        }
+    });
+};
