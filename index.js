@@ -355,12 +355,12 @@ const viewMenu = () => {
         {
             name: 'viewAction',
             type: 'list',
-            message: `${chalk.hex('#ffdd8c')('▬▬▬▬▬▬▬▬▬▬ VIEW MENU ▬▬▬▬▬▬▬▬▬▬')}\n${chalk.hex('#bec0c2').italic('What would you like to do?')}`,
+            message: 'Please choose an option.',
             choices: [
                 'View employees',
                 'View roles',
                 'View departments',
-                chalk.italic('Go back to main menu')
+                'Go back to main menu'
             ]
         }
     ])
@@ -903,7 +903,7 @@ const updateEmployeeMenu = () => {
                     choices: [
                         'Find employee by id',
                         'View all employees',
-                        chalk.italic('Go back to update menu')
+                        'Go back to update menu'
                     ]
                 }
             ]).then((answer) => {
@@ -992,4 +992,59 @@ const updateEmployeePromise = (updatedFirstName, updatedLastName, updatedName, e
         console.log((`Employee (id: ${employeeId}) name successfully updated!\n`) + (`${employee} (previous name) ---> ${updatedName} (updated name)\n`));
         
     });
+};
+
+const updateEmployeeRole = (employeeId, employee, employeeRole) => {
+    let roles = [];
+    let roleTitles = ['No existing roles in database'];
+    connection.query(
+        'SELECT * FROM role', (err, res) => {
+            if (err) throw err;
+            if (res.length < 1) {
+                inquirer.prompt([
+                    {
+                        name: 'noRoles',
+                        type: 'list',
+                        message: 'There are no existing roles in the database...',
+                        choices: ['Go back to update menu']
+                    }
+                ]).then(() => {
+                    updateMenu();
+                });
+            } else {
+                if (roleTitles[0] === 'No existing roles in database') {
+                    roleTitles.splice(0, 1);
+                };
+                res.forEach((item) => {
+                    roles.push(item);
+                    roleTitles.push(`${item.id} | ${item.title}`);
+                });
+
+                inquirer.prompt([
+                    {
+                        name: 'updateRole',
+                        type: 'list',
+                        message: 'New role:',
+                        choices: roleTitles
+                    }
+                ])
+                .then((answer) => {
+                    let roleId = parseInt(answer.updateRole.split(' ').splice(0, 1));
+                    let query = 'UPDATE employee ';
+                    query += 'SET role_id = ? WHERE id = ?'
+                    connection.query(query, [roleId, employeeId], (err, res) => {
+                        if (err) throw err;
+                        console.log(`Employee (id: ${employeeId} | ${employee}) role successfully updated!`);
+                        connection.query(
+                            `SELECT * FROM role WHERE id = ?`, [roleId], (err, res) => {
+                                if (err) throw err;
+                                console.log((`${employeeRole} (previous role) ---> ${res[0].title} (updated role)\n`));
+                                setTimeout(updateMenu, 1000);
+                            }
+                        );
+                    });
+                });
+            };
+        }
+    );
 };
