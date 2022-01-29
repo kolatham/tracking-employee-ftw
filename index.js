@@ -607,3 +607,21 @@ const viewEmployeeByManagerMenu = () => {
         };
     });
 };
+
+const viewEmployeeByManagerAll = () => {
+    let query = 'SELECT B.first_name AS manager_first, B.last_name AS manager_last, A.id AS employee_id, A.first_name AS employee_first, A.last_name AS employee_last, role.title AS role, role.salary, department.name AS department ';
+    query += 'FROM employee A ';
+    query += 'LEFT JOIN role ON A.role_id = role.id ';
+    query += 'LEFT JOIN department ON role.department_id = department.id ';
+    query += 'JOIN employee B ON A.manager_id = B.id ';
+    query += 'ORDER BY A.manager_id';
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length > 0) {
+            console.log('');
+            console.table(res);
+        } else {
+            console.log('There are no managers.')
+        };
+    });
+};
