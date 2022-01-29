@@ -7,15 +7,12 @@ const mysql = require('mysql2');
 const PORT = process.env.PORT || 3001;
 const app = express();
 
-// Express middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// Connect to database
 const db = mysql.createConnection(
   {
     host: 'localhost',
-    // MySQL Username
     user: 'root',
     password: '',
     database: 'company_db'
@@ -34,6 +31,7 @@ const mainMenu = () => {
         {
             name: 'action',
             type: 'list',
+            message: 'Please choose an option.',
             choices: [
                 'Add data',
                 'View data',
@@ -68,6 +66,7 @@ const addMenu = () => {
         {
             name: 'addAction',
             type: 'list',
+            message: 'Please choose an option.',
             choices: [
                 'Add an employee',
                 'Add a role',
@@ -76,7 +75,6 @@ const addMenu = () => {
         }
     ])
     .then((answer) => {
-        // Continues to functions
         switch(answer.addAction) {
             case 'Add an employee':
                 addEmployee();
@@ -350,5 +348,57 @@ const addEmployeeContinue = (employees, employeeNames, employeeFirstName, employ
                 });
             }
         );
+    });
+};
+
+const viewMenu = () => {
+    inquirer.prompt([
+        {
+            name: 'viewEmployees',
+            type: 'list',
+            Message: 'Please choose an option.',
+            choices: [
+                'View all employees',
+                'View employee by role',
+                'View employee by department',
+                'View employee by manager',
+            ]
+        }
+    ])
+    .then((answer) => {
+        switch(answer.viewEmployees) {
+            case 'View all employees':
+                viewEmployeeAll();
+                break;
+            case 'View employee by role':
+                viewEmployeeByRoleMenu();
+                break;
+            case 'View employee by department':
+                viewEmployeeByDepartmentMenu();
+                break;
+            case 'View employee by manager':
+                viewEmployeeByManagerMenu();
+                break;
+            default:
+                mainMenu();
+        };
+    });
+    
+};
+
+const viewEmployeeAll = () => {
+    let query = 'SELECT A.id, A.first_name, A.last_name, role.title AS role, role.salary, department.name AS department, B.first_name AS manager_first, B.last_name AS manager_last ';
+    query += 'FROM employee A ';
+    query += 'LEFT JOIN role ON A.role_id = role.id ';
+    query += 'LEFT JOIN department ON role.department_id = department.id ';
+    query += 'LEFT JOIN employee B ON A.manager_id = B.id';
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        if (res.length > 0) {
+            console.log('');
+            console.table(res);
+        } else {
+            console.log('There is no employee data to display.')
+        };
     });
 };
