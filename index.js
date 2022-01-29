@@ -756,7 +756,6 @@ const deleteMenu = () => {
                 'Delete an employee',
                 'Delete a role',
                 'Delete a department',
-                'Delete ALL data',
                 'Go back to main menu'
             ]
         }
@@ -952,6 +951,63 @@ const deleteRole = () => {
                         connection.query(`DELETE FROM role WHERE id = ?`, [roleId], (err, res) => {
                             if (err) throw err;
                             console.log(`Role ('${roleName}', id: ${roleId}) successfully deleted.\n`);
+                            setTimeout(deleteMenu, 1000);
+                        });
+                    } else {
+                        console.log('Action cancelled. Returning to delete menu...\n');
+                        setTimeout(deleteMenu, 1000);
+                    };
+                });
+            });
+        };
+    });
+};
+
+const deleteDepartment = () => {
+    let departmentNames = ['No existing departments in database'];
+
+    connection.query('SELECT * FROM department', (err, res) => {
+        if (err) throw err;
+        if (res.length < 1) {
+            inquirer.prompt([
+                {
+                    name: 'noDepartments',
+                    type: 'list',
+                    message: 'There are no existing departments in the database...',
+                    choices: ['Go back to delete menu']
+                }
+            ]).then(() => deleteMenu());
+        } else {
+            if (departmentNames[0] === 'No existing departments in database') {
+                departmentNames.splice(0, 1);
+            };
+            res.forEach((item) => {
+                departmentNames.push(`${item.id} | ${item.name}`);
+            });
+
+            inquirer.prompt([
+                {
+                    name: 'deleteDepartment',
+                    type: 'list',
+                    message: 'Select a department to delete:',
+                    choices: departmentNames
+                }
+            ])
+            .then((answer) => {
+                let departmentId = parseInt(answer.deleteDepartment.split(' ').splice(0, 1));
+                let departmentName = answer.deleteDepartment.split(' ').slice(2).join(' ').trim();
+    
+                inquirer.prompt([
+                    {
+                        name: 'deleteConfirm',
+                        type: 'confirm',
+                        message: `Are you sure you want to delete the department '${departmentName}'?`
+                    }
+                ]).then((answer) => {
+                    if (answer.deleteConfirm === true) {
+                        connection.query(`DELETE FROM department WHERE id = ?`, [departmentId], (err, res) => {
+                            if (err) throw err;
+                            console.log(`Department ('${departmentName}', id: ${departmentId}) successfully deleted.\n`);
                             setTimeout(deleteMenu, 1000);
                         });
                     } else {
